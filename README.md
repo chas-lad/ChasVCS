@@ -9,8 +9,7 @@
 - Add: Add files to the repository.
 - Commit: Save a snapshot of changes made to files.
 - Checkout: Used to:
-    - 'checkout' a specific commit on the current branch using commit_hash 
-    - switch to another branch using the branch_name (HEAD by default will be at t)
+    - 'checkout' a specific commit on a specific branch using commit_hash 
 - Branch: Create and manage branches.
 - Merge: Merge changes from one branch into another.
 - Diff: Show differences between versions of files.

@@ -62,9 +62,33 @@ int add(int fileCount, char* argv[]){
 
         char* hash = calculateHash(file);
 
-        fclose(file);
+        // check if hash exists in staging.txt file already
+        file = fopen(".chas/staging.txt", "r");
 
-        printf("hash: %s\n", hash);
+        if (file == NULL) {
+            printf("Error opening file!\n");
+            return 1;
+        }
+
+        char buffer[BUFFER_SIZE];
+        int found = 0;
+        while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
+            char *token = strtok(buffer, ",");
+            char *fileHash = strtok(NULL, ", ");
+            fileHash[strcspn(fileHash, "\n")] = 0;  // Remove trailing newline from fileHash
+            hash[strcspn(hash, "\n")] = 0;  // Remove trailing newline from hash
+            if (strcmp(hash, fileHash) == 0) {
+                printf("File already exists in staging area\n");
+                found = 1;
+            }
+        }
+        // If file already exists in staging.txt, skip to next file
+        if (found){
+            continue;
+        }
+
+
+        fclose(file);
 
         // add entry to staging.txt file
 

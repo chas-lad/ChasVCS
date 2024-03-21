@@ -9,7 +9,6 @@
 
 #define BUFFER_SIZE 4096
 
-
 int init(){
     // Check if the directory already exists
     struct stat st = {0};
@@ -132,7 +131,6 @@ int commit(char* currentBranch, char* message[]) {
 
     printf("Commit directory created successfully.\n");
 
-
     // zip the files from the staging area to the commit directory into a file called hash.zip 
     
     // create a zip file called hash.zip in the commit directory consisting of all the files listed in staging.txt
@@ -184,7 +182,7 @@ int commit(char* currentBranch, char* message[]) {
     file = fopen(branchInfoFilePath, "a");
 
     if (file == NULL) {
-        printf("Error opening file!\n");
+        perror("Error opening file!\n");
         return 1;
     }
 
@@ -196,12 +194,75 @@ int commit(char* currentBranch, char* message[]) {
 
     fclose(file);
 
+    // update the HEAD file with the current branch and the total hash (current commit)
+    file = fopen(".chas/HEAD", "w");
+
+    if (file == NULL) {
+        perror("Error opening file!\n");
+        return 1;
+    }
+    // write the current branch
+    fprintf(file, "currentBranch:%s", currentBranch);
+    
+    // write the current commit hash
+    fprintf(file, "\ncurrentHeadLocation:%s", totalHashStr);
+
+    fclose(file);
 
     return 0;
 }
 
-int checkout(){
+int checkout(char* branchName, char* commitHash){
    
+    // check if the branch exists
+    struct stat st = {0};
+    char branchFolderName[100];
+    sprintf(branchFolderName, ".chas/branches/%s", branchName);
+
+    if (stat(branchFolderName, &st) == -1) {
+        // Directory doesn't exist
+        printf("Branch does not exist\n");
+        return 1;
+    }
+
+    // check if the commit hash exists in the branch
+    char commitFolderName[100];
+    sprintf(commitFolderName, ".chas/branches/%s/%s", branchName, commitHash);
+
+    if (stat(commitFolderName, &st) == -1) {
+        // Directory doesn't exist
+        printf("Commit does not exist\n");
+        return 1;
+    }
+
+    // unzip the files from the commit directory to the working directory
+    char zipFileName[100];
+    sprintf(zipFileName, "%s.zip", commitHash);
+
+    char zipFilePath[150];
+    sprintf(zipFilePath, "%s/%s", commitFolderName, zipFileName);
+
+    char unzipCommand[150]; 
+
+    // temp here just for testing purposes remove this later and change to .
+    sprintf(unzipCommand, "unzip %s -d ./temp/", zipFilePath);
+
+    system(unzipCommand);
+
+    // update the HEAD file with the current branch and the total hash (current commit)
+    FILE *file = fopen(".chas/HEAD", "w");
+
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        return 1;
+    }
+    // write the current branch
+    fprintf(file, "currentBranch:%s", branchName);
+
+    // write the current commit hash
+    fprintf(file, "\ncurrentHeadLocation:%s", commitHash);
+
+    fclose(file);
 
     return 0;
 }
@@ -229,7 +290,7 @@ int main(int argc, char* argv[]){
     }
 
     if(strcmp(argv[1], "commit") == 0){
-        if(argc > 3){
+        if(argc > 3 || argc < 3){
             printf("Please provide one message\n");
             return 1;
         }
@@ -247,20 +308,28 @@ int main(int argc, char* argv[]){
 
         while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
             char *token = strtok(buffer, ":");
-            char *branch = strtok(NULL, ":");
-            printf("Branch: %s\n", branch);
-            strcpy(currentBranch, branch);
+            if(strcmp(token, "currentBranch") == 0){
+                char *branch = strtok(NULL, ":");
+                strcpy(currentBranch, branch);
+            }
         }
 
         fclose(file);
 
-        printf("Current branch: %s\n", currentBranch);
+        // remove the trailing newline from the currentBranch
+        currentBranch[strcspn(currentBranch, "\n")] = 0;
 
         return commit(currentBranch, &argv[2]);
     }
 
     if(strcmp(argv[1], "checkout") == 0){
-        printf("checkout\n");
+        // argv[2] == branch name, argv[3] == commit hash
+        if(argc > 4 || argc < 4){
+            printf("Please provide a branch name and a commit hash \n");
+            return 1;
+        }
+
+        return checkout(argv[2], argv[3]);
     }
 
     if(strcmp(argv[1], "branch") == 0){
