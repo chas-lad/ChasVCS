@@ -3,6 +3,9 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <openssl/sha.h>
+#include <time.h>
+
+#include "add.h"
 
 #define BUFFER_SIZE 4096
 
@@ -19,42 +22,20 @@ int init(){
         }
         printf(".chas directory created successfully.\n");
 
-        if (mkdir(".chas/objects", 0700) == -1) {
-            // Failed to create directory
-            perror("mkdir");
-            return 1;
-        }
-        printf(".chas/objects directory created successfully.\n");
 
-        //The pack subfolder contains compressed snapshots of the codebase
-        if (mkdir(".chas/objects/pack", 0700) == -1) {
+        if (mkdir(".chas/branches", 0700) == -1) {
             // Failed to create directory
             perror("mkdir");
             return 1;
         }
-        printf(".chas/objects/pack directory created successfully.\n");
+        printf(".chas/branches directory created successfully.\n");
 
-        // The info subfolder contains metadata about the snapshots in the codebase
-        if (mkdir(".chas/objects/info", 0700) == -1) {
+        if (mkdir(".chas/branches/master", 0700) == -1) {
             // Failed to create directory
             perror("mkdir");
             return 1;
         }
-        printf(".chas/objects/info directory created successfully.\n");
-
-        if (mkdir(".chas/refs", 0700) == -1) {
-            // Failed to create directory
-            perror("mkdir");
-            return 1;
-        }
-        printf(".chas/refs directory created successfully.\n");
-
-        if (mkdir(".chas/refs/heads", 0700) == -1) {
-            // Failed to create directory
-            perror("mkdir");
-            return 1;
-        }
-        printf(".chas/refs/heads directory created successfully.\n");
+        printf(".chas/branches/master directory created successfully.\n");
 
 
         FILE *file = fopen(".chas/HEAD", "w");
@@ -64,7 +45,16 @@ int init(){
             return 1;
         }
 
-        fprintf(file, "refs: refs/heads/master\n");
+        fprintf(file, "currentBranch:master");
+
+        fclose(file);
+
+        file = fopen(".chas/staging.txt", "w");
+
+        if (file == NULL) {
+            printf("Error opening file!\n");
+            return 1;
+        }
 
         fclose(file);
 
@@ -75,111 +65,143 @@ int init(){
     return 0;
 }
 
-int commit(){
-    // Commiting: - You would need to create a commit object that captures the state of the repository at that point in time. This commit object would contain metadata such as the commit message, author, timestamp, and a reference to the parent commit (if any).
-    // - For each file staged in the index, you would retrieve its content from its original location, compute its hash, and compare it with the hash stored in the index. If the hash differs, it means the file has been modified, and you would update its entry in the repository accordingly.
-    // - You would then update the index file to reflect the new state of the repository after the commit.Updating the index file with the new state of the repository after performing a commit involves ensuring that the index accurately reflects the files staged for the next commit and their corresponding hashes. When you commit changes in a version control system (VCS), you are essentially capturing the state of the repository at that point in time. After the commit, you want the index file to reflect any changes made to the staged files or their metadata.
-    // - Finally, you would create a commit object containing the metadata and a reference to the root tree object representing the state of the repository at that commit.
-    return 0;
-}
+int commit(char* currentBranch, char* message[]) {
+    // Open staging.txt file
+    FILE* file;
+    file = fopen(".chas/staging.txt", "r");
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        return 1;
+    }
 
-int checkout(){
-    // Checkout: - You would need to retrieve the state of the repository at that commit. This involves retrieving the root tree object associated with the commit.
-    // - You would traverse the tree object recursively to retrieve the content of each file at that commit. Since the content is not stored in the repository, you would need to locate the files in their original locations and copy them to the working directory.
-    // - You would also update the index file to reflect the state of the repository after checking out the commit.
-
-    return 0;
-}
-
-char* calculateHash(FILE* file){
-    unsigned char hash[SHA_DIGEST_LENGTH];
+    // Define variables
+    char buffer[BUFFER_SIZE];
+    unsigned char totalHash[SHA_DIGEST_LENGTH]; // This will store the combined hash of all files
     SHA_CTX sha_ctx;
-    int bytes_read;
-    unsigned char buffer[BUFFER_SIZE];
-    char* hash_string = (char*)malloc((SHA_DIGEST_LENGTH * 2 + 1) * sizeof(char));
+    SHA1_Init(&sha_ctx);
 
-    if (!hash_string) {
-        fprintf(stderr, "Memory allocation error\n");
-        return NULL;
+    // Iterate through staging.txt to compute total hash
+    while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
+        // Extract file name and its hash from the line
+        char *token = strtok(buffer, ",");
+        char *fileHash = strtok(NULL, ",");
+
+        // Print file info (optional)
+        printf("File: %s, Hash: %s\n", token, fileHash);
+
+        // Update total hash with the hash of the current file
+        SHA1_Update(&sha_ctx, fileHash, strlen(fileHash));
     }
 
-    if (!SHA1_Init(&sha_ctx)) {
-        fprintf(stderr, "Error initializing SHA-1 context\n");
-        free(hash_string);
-        return NULL;
-    }
+    // Finalize total hash
+    SHA1_Final(totalHash, &sha_ctx);
 
-    while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, file)) != 0) {
-        if (!SHA1_Update(&sha_ctx, buffer, bytes_read)) {
-            fprintf(stderr, "Error updating SHA-1 context\n");
-            free(hash_string);
-            return NULL;
-        }
-    }
-
-    if (!SHA1_Final(hash, &sha_ctx)) {
-        fprintf(stderr, "Error finalizing SHA-1 hash\n");
-        free(hash_string);
-        return NULL;
-    }
-
+    // Convert totalHash to hexadecimal string (optional)
+    char totalHashStr[SHA_DIGEST_LENGTH * 2 + 1];
     for (int i = 0; i < SHA_DIGEST_LENGTH; i++) {
-        sprintf(&(hash_string[i * 2]), "%02x", hash[i]);
+        sprintf(&totalHashStr[i * 2], "%02x", totalHash[i]);
     }
-    hash_string[SHA_DIGEST_LENGTH * 2] = '\0'; // Null-terminate the string
+    totalHashStr[SHA_DIGEST_LENGTH * 2] = '\0'; // Null-terminate the string
+    printf("Total hash: %s\n", totalHashStr);
 
-    return hash_string;
-}
+    // Close staging.txt file
+    fclose(file);
 
-int add(int fileCount, char* argv[]){
+    // Check if the commit directory with the total hash already exists
+    struct stat st = {0};
+    char commitFolderName[100];
+    sprintf(commitFolderName, ".chas/branches/master/%s", totalHashStr);
 
-    // Calculate File Hashes: For each file being added, calculate a unique identifier (such as a SHA-1 hash) based on its content.
+    if (stat(commitFolderName, &st) == 0) {
+        // Directory already exists
+        printf("Nothing to commit. Add files using 'git add'\n");
+        return 1;
+    }
 
-    // Store the actual content of each file in the refs/objects/ directory, with the filename being the hash of the file content. This ensures that each file's content is uniquely identified by its hash.
-    // Organize Files by Hash:
+    // create commit directory with the total hash
 
-    // Create a directory structure within refs/objects/ to organize the files based on their hashes. Typically, the first two characters of the hash are used as a subdirectory name to prevent having too many files in a single directory.
-    // Save Files to the Repository:
+    printf("Commit directory: %s\n", commitFolderName);
 
-    // After calculating the hash of a file's content, store the file in the appropriate location within refs/objects/ using its hash as the filename.
-    // Reference in Index and Commits:
+    // create commit directory with the total hash
 
-    // Instead of storing the actual file content in the index or commits, store references to the hashes of the file contents. This ensures that the index and commits remain lightweight and efficient.
+    if (mkdir(commitFolderName, 0700) == -1) {
+        // Failed to create directory
+        perror("mkdir");
+        return 1;
+    }
+
+    printf("Commit directory created successfully.\n");
 
 
-
-    // afterwards we would have commits and then checking out a specific commit. this would be done by:
-
+    // zip the files from the staging area to the commit directory into a file called hash.zip 
     
-    // index file stores information about what is currently staged. 
-    // check index file exists, if not then make one
-    FILE *file = fopen(".chas/index", "w");
+    // create a zip file called hash.zip in the commit directory consisting of all the files listed in staging.txt
+    char zipFileName[100];
+    sprintf(zipFileName, "%s.zip", totalHashStr);
+
+    char zipFilePath[150];
+    sprintf(zipFilePath, "%s/%s", commitFolderName, zipFileName);
+
+    char zipCommand[1000]; // might need to increase this or dynamically allocate memory for this if we are committing a lot of files
+    sprintf(zipCommand, "zip %s ", zipFilePath);
+
+    file = fopen(".chas/staging.txt", "r");
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        return 1;
+    }
+
+    while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
+        char *token = strtok(buffer, ",");
+        char *fileHash  = strtok(NULL, ",");
+        printf("File: %s, Hash: %s\n", token, fileHash );
+        sprintf(zipCommand, "%s %s", zipCommand, token);
+    }
+
+    system(zipCommand);
+
+    // save the commit message in a file called message.txt in the commit directory
+    char messageFilePath[100];
+    sprintf(messageFilePath, "%s/message.txt", commitFolderName);
+
+    file = fopen(messageFilePath, "w");
 
     if (file == NULL) {
         printf("Error opening file!\n");
         return 1;
     }
+
+    fprintf(file, "%s", message[0]);
+
+    fclose(file);
+
+    // update the branchInfo.txt file with the total hash depending on the branch as well as the time of the commit
+    char branchInfoFilePath[100];
+    sprintf(branchInfoFilePath, ".chas/branches/%s/branchInfo.txt", currentBranch);
+
+    printf("Branch info file path: %s\n", branchInfoFilePath);
+
+    file = fopen(branchInfoFilePath, "a");
+
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        return 1;
+    }
+
+    // get the current time
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+
+    fprintf(file, "%s, %s, %d-%d-%d %d:%d:%d\n", message[0], totalHashStr, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
     fclose(file);
 
 
-    for (int i = 0; i < fileCount; i++) {
-        printf("File: %s\n", argv[i]);
+    return 0;
+}
 
-        FILE *file = fopen(argv[i], "rb");
-
-        if (file == NULL) {
-            printf("Error opening file!\n");
-            return 1;
-        }
-
-        char* hash = calculateHash(file);
-
-        fclose(file);
-
-        printf("hash: %s", hash);
-
-        free(hash);
-    }
+int checkout(){
+   
 
     return 0;
 }
@@ -207,7 +229,34 @@ int main(int argc, char* argv[]){
     }
 
     if(strcmp(argv[1], "commit") == 0){
-        printf("commit\n");
+        if(argc > 3){
+            printf("Please provide one message\n");
+            return 1;
+        }
+        // get the current branch from HEAD file
+
+        FILE* file;
+        file = fopen(".chas/HEAD", "r");
+        if (file == NULL) {
+            printf("Error opening file!\n");
+            return 1;
+        }
+
+        char buffer[BUFFER_SIZE];
+        char currentBranch[100];
+
+        while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
+            char *token = strtok(buffer, ":");
+            char *branch = strtok(NULL, ":");
+            printf("Branch: %s\n", branch);
+            strcpy(currentBranch, branch);
+        }
+
+        fclose(file);
+
+        printf("Current branch: %s\n", currentBranch);
+
+        return commit(currentBranch, &argv[2]);
     }
 
     if(strcmp(argv[1], "checkout") == 0){
