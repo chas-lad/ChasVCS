@@ -1,0 +1,1 @@
+int checkout(char* branchName, char* commitHash);
