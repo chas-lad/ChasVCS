@@ -1,1 +1,1 @@
-int getLog();
+int getLog(char* branchName);

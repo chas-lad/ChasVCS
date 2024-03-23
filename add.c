@@ -72,18 +72,71 @@ int add(int fileCount, char* argv[]){
 
         char buffer[BUFFER_SIZE];
         int found = 0;
+        int changed = 0;
         while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
             char *token = strtok(buffer, ",");
             char *fileHash = strtok(NULL, ", ");
             fileHash[strcspn(fileHash, "\n")] = 0;  // Remove trailing newline from fileHash
             hash[strcspn(hash, "\n")] = 0;  // Remove trailing newline from hash
-            if (strcmp(hash, fileHash) == 0) {
-                printf("File already exists in staging area\n");
+
+            // Check if file with same hash and filePath already exists in staging.txt
+            // Important we check filePath as well, as two files can have the same hash
+            // if they have the same contents. So by checking filePath, we ensure that
+            // we are still allowed to have two files with the same contents but different
+            // filepaths in our current working directory.
+            if ( strcmp(argv[i], token) == 0 && strcmp(hash, fileHash) == 0 ){
+                printf("File already exists in staging area and is unchanged.\n");
                 found = 1;
+                changed = 0;
+            }
+            else if ( strcmp(argv[i], token) == 0 && strcmp(hash, fileHash) != 0 ){
+                found = 1;
+                changed = 1;
             }
         }
-        // If file already exists in staging.txt, skip to next file
-        if (found){
+        // If filepath in our staging.txt and is unchanged, skip to next file
+        if (found && !changed){
+            continue;
+        }
+
+        // If filepath in our staging.txt and has changed delete the entry from staging.txt
+        // and add the new entry with the new updated hash
+        if (found && changed){
+            // Create a temp file to store all entries except the entry we want to update
+            FILE* tempFile = fopen(".chas/temp.txt", "w");
+            if (tempFile == NULL) {
+                printf("Error opening file!\n");
+                return 1;
+            }
+
+            file = fopen(".chas/staging.txt", "r");
+
+            if (file == NULL) {
+                printf("Error opening file!\n");
+                return 1;
+            }
+
+            // Copy all entries from staging.txt to temp.txt except the entry we want to update
+            while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
+                char *token = strtok(buffer, ",");
+                char *fileHash = strtok(NULL, ", ");
+                fileHash[strcspn(fileHash, "\n")] = 0;  // Remove trailing newline from fileHash
+
+                if ( strcmp(argv[i], token) != 0 ){
+                    printf("Adding %s, %s to temp.txt\n", token, fileHash);
+                    fprintf(tempFile, "%s, %s\n", token, fileHash);
+                }
+            }
+
+            // Add the updated entry with new hash to temp.txt
+            fprintf(tempFile, "%s, %s\n", argv[i], hash);
+
+            fclose(file);
+            fclose(tempFile);
+
+            // Remove staging.txt and rename temp.txt to staging.txt
+            remove(".chas/staging.txt");
+            rename(".chas/temp.txt", ".chas/staging.txt");
             continue;
         }
 

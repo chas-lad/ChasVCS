@@ -18,7 +18,8 @@ int init(){
     // Check if the directory already exists
     struct stat st = {0};
     if (stat(".chas", &st) == -1) {
-        // Directory doesn't exist, so create it
+        // Directory doesn't exist, so create it in the current directory
+
         if (mkdir(".chas", 0700) == -1) {
             // Failed to create directory
             perror("mkdir");
@@ -153,12 +154,36 @@ int main(int argc, char* argv[]){
     }
 
     if(strcmp(argv[1], "status") == 0){
-        
         return status();
     }
 
     if(strcmp(argv[1], "log") == 0){
-        return getLog();
+        
+        // get the current branch from HEAD file
+
+        FILE* file;
+        file = fopen(".chas/HEAD", "r");
+        if (file == NULL) {
+            printf("Error opening file!\n");
+            return 1;
+        }
+
+        char buffer[BUFFER_SIZE];
+        char currentBranch[100];
+
+        while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
+            char *token = strtok(buffer, ":");
+            if(strcmp(token, "currentBranch") == 0){
+                char *branch = strtok(NULL, ":");
+                strcpy(currentBranch, branch);
+            }
+        }
+
+        fclose(file);
+        // remove the trailing newline from the currentBranch
+        currentBranch[strcspn(currentBranch, "\n")] = 0;
+
+        return getLog(currentBranch);
     }
 
     if(strcmp(argv[1], "revert") == 0){

@@ -7,62 +7,41 @@
 
 #define BUFFER_SIZE 4096
 
-// Log is a built in function in C hence named this getLog().
-int getLog(){
-    // get the current branch from HEAD file
+// Log is a built in function in C hence I named this getLog() to prevent issues in method overriding.
+int getLog(char* branchName){
+    
+    // open the branchInfo.txt file in the relevant commit directory 
+    char commitFileName[100];
+    sprintf(commitFileName, ".chas/branches/%s/branchInfo.txt", branchName);
 
-    FILE* file;
-    file = fopen(".chas/HEAD", "r");
+    FILE *file = fopen(commitFileName, "r");
+
     if (file == NULL) {
         printf("Error opening file!\n");
         return 1;
     }
 
+    // read the contents of the file and print it to the console in a nice format of commit message, commit hash, timestamp
+    
     char buffer[BUFFER_SIZE];
-    char currentBranch[100];
-    char currentCommitHash[100];
 
     while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
-        char *token = strtok(buffer, ":");
-        if(strcmp(token, "currentBranch") == 0){
-            char *branch = strtok(NULL, ":");
-            strcpy(currentBranch, branch);
-        }
-        if(strcmp(token, "currentHeadLocation") == 0){
-            char *commitHash = strtok(NULL, ":");
-            strcpy(currentCommitHash, commitHash);
-        }
+        // separate the buffer into commit message, commit hash, timestamp
+
+        // Probably best to start using some heap memory as program grows
+        // below method is using stack memory and this is used across the entire program
+        char* commitMessage = strtok(buffer, ",");
+        char* commitHash = strtok(NULL, ",");
+        char* timestamp = strtok(NULL, ",");
+
+        printf("Commit Message: %s\n", commitMessage);
+        printf("Commit Hash   : %s\n", commitHash);
+        printf("Timestamp     : %s\n", timestamp);
+
     }
+
 
     fclose(file);
-
-    // remove the trailing newline from the currentBranch
-    currentBranch[strcspn(currentBranch, "\n")] = 0;
-    currentCommitHash[strcspn(currentCommitHash, "\n")] = 0;
-
-    // get the commit hash from the branchInfo.txt file
-    char branchInfoFilePath[100];
-    sprintf(branchInfoFilePath, ".chas/branches/%s/branchInfo.txt", currentBranch);
-
-    file = fopen(branchInfoFilePath, "r");
-    if (file == NULL) {
-        printf("Error opening file!\n");
-        return 1;
-    }
-
-    printf("Current Branch: %s\n", currentBranch);
-    printf("Current Commit: %s\n\n", currentCommitHash);
-
-    printf("Commits:\n");
-    while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
-        char *message = strtok(buffer, ",");
-        char *commitHash = strtok(NULL, ",");
-        char *time = strtok(NULL, ",");
-
-        printf("Message: %s, Commit: %s, Time: %s\n", message, commitHash, time);
-    }
-
-    fclose(file);
-
+    
     return 0;
 }
