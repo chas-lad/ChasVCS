@@ -5,7 +5,7 @@
 #include <openssl/sha.h>
 #include <time.h>
 
-
+// Function to create a new branch
 int branch(char* branchName){
     // check if the branch already exists
     struct stat st = {0};
@@ -49,6 +49,16 @@ int branch(char* branchName){
     }
     // write the current branch
     fprintf(file, "currentBranch:%s", branchName);
+
+    fclose(file);
+
+    // Clean the staging area since we have created a new branch
+    file = fopen(".chas/staging.txt", "w");
+
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        return 1;
+    }
 
     fclose(file);
 

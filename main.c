@@ -9,6 +9,7 @@
 #include "commit.h"
 #include "checkout.h"
 #include "branch.h"
+#include "log.h"
 #include "status.h"
 
 #define BUFFER_SIZE 4096
@@ -154,11 +155,10 @@ int main(int argc, char* argv[]){
     if(strcmp(argv[1], "status") == 0){
         
         return status();
-
     }
 
     if(strcmp(argv[1], "log") == 0){
-        printf("log\n");
+        return getLog();
     }
 
 

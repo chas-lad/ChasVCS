@@ -152,5 +152,17 @@ int commit(char* currentBranch, char* message[]) {
 
     fclose(file);
 
+    // copy staging.txt to the commit directory
+    char stagingFilePath[100];
+    sprintf(stagingFilePath, ".chas/staging.txt");
+    
+    char stagingCopyFilePath[100];
+    sprintf(stagingCopyFilePath, "%s/staging.txt", commitFolderName);
+
+    char copyCommand[1000];
+    sprintf(copyCommand, "cp %s %s", stagingFilePath, stagingCopyFilePath);
+
+    system(copyCommand);
+
     return 0;
 }

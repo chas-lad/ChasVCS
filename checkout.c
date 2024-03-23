@@ -5,7 +5,7 @@
 #include <openssl/sha.h>
 #include <time.h>
 
-
+// Function to checkout a specific commit on a specific branch (both must be specified)
 int checkout(char* branchName, char* commitHash){
 
     // Delete all the files/folders in the current working directory except the .chas folder
@@ -67,6 +67,23 @@ int checkout(char* branchName, char* commitHash){
     fprintf(file, "\ncurrentHeadLocation:%s", commitHash);
 
     fclose(file);
+
+    // update the staging.txt file with the files from the commit
+    file = fopen(".chas/staging.txt", "w");
+
+    if (file == NULL) {
+        printf("Error opening file!\n");
+        return 1;
+    }
+
+    // copy the staging.txt file from the commit directory to the staging.txt file in the .chas folder
+    char stagingFilePath[100];
+    sprintf(stagingFilePath, "%s/staging.txt", commitFolderName);
+
+    char copyCommand[1000];
+    sprintf(copyCommand, "cp %s %s", stagingFilePath, ".chas/staging.txt");
+
+    system(copyCommand);
 
     return 0;
 }

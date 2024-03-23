@@ -22,3 +22,7 @@
 - The code is written in C, and when compiled produces a `chas` executable
 - This executable will need to be put in the directory we are using the chas commands in.
 - Example usage: `./chas init`,`./chas add file.txt`
+
+
+## TODO
+- Need ability to track/commit directories. Should be trivial, just need to store the path.

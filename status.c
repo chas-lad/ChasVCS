@@ -5,63 +5,125 @@
 #include <openssl/sha.h>
 #include <time.h>
 
-#define BUFFER_SIZE 4096
+
+// Function to check if a file exists
+int file_exists(char *filename) {
+    struct stat buffer;
+    return (stat(filename, &buffer) == 0);
+}
+
+// Function to compute the SHA-1 hash of a file
+void compute_hash(char *filename, unsigned char *result) {
+    FILE *file = fopen(filename, "rb");
+    if (!file) return;
+
+    SHA_CTX shaContext;
+    SHA1_Init(&shaContext);
+
+    char buf[1024];
+    int bytesRead = 0;
+    while ((bytesRead = fread(buf, 1, 1024, file))) {
+        SHA1_Update(&shaContext, buf, bytesRead);
+    }
+
+    SHA1_Final(result, &shaContext);
+
+    fclose(file);
+}
+
 
 int status(){
-    // get the current branch from HEAD file
+    // Where HEAD is pointing, whether that is a branch or a commit (this is where you are "checked out" to)
+    // If you have any changed files in your current directory that have not yet been committed
+    // If changed files are staged or not
 
-    FILE* file;
-    file = fopen(".chas/HEAD", "r");
+    // Read the HEAD file
+    FILE *file = fopen(".chas/HEAD", "r");
+
     if (file == NULL) {
         printf("Error opening file!\n");
         return 1;
     }
 
-    char buffer[BUFFER_SIZE];
+    char buffer[100];
     char currentBranch[100];
-    char currentCommitHash[100];
 
-    while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
+    while (fgets(buffer, 100, file) != NULL) {
         char *token = strtok(buffer, ":");
         if(strcmp(token, "currentBranch") == 0){
             char *branch = strtok(NULL, ":");
             strcpy(currentBranch, branch);
         }
-        if(strcmp(token, "currentHeadLocation") == 0){
-            char *commitHash = strtok(NULL, ":");
-            strcpy(currentCommitHash, commitHash);
-        }
     }
 
     fclose(file);
 
-    // remove the trailing newline from the currentBranch
-    currentBranch[strcspn(currentBranch, "\n")] = 0;
-    currentCommitHash[strcspn(currentCommitHash, "\n")] = 0;
+    // Read the staging.txt file
+    file = fopen(".chas/staging.txt", "r");
 
-    // get the commit hash from the branchInfo.txt file
-    char branchInfoFilePath[100];
-    sprintf(branchInfoFilePath, ".chas/branches/%s/branchInfo.txt", currentBranch);
-
-    file = fopen(branchInfoFilePath, "r");
     if (file == NULL) {
         printf("Error opening file!\n");
         return 1;
     }
 
-    printf("Current Branch: %s\n", currentBranch);
-    printf("Current Commit: %s\n\n", currentCommitHash);
+    printf("Staged files:\n");
 
-    printf("Commits:\n");
-    while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
-        char *message = strtok(buffer, ",");
-        char *commitHash = strtok(NULL, ",");
-        char *time = strtok(NULL, ",");
+    while (fgets(buffer, 100, file) != NULL) {
+        char *token = strtok(buffer, ",");
+        printf("%s\n", token);
+    }
 
-        printf("Message: %s, Commit: %s, Time: %s\n", message, commitHash, time);
+    fclose(file);
+
+    // For each of the files in staging.txt in .chas root, check if the file exists in the current directory
+    // if it does check if the hashes are different. If they are then note that a file has been changed.
+
+
+    file = fopen(".chas/staging.txt", "r");
+    if (!file) {
+        printf("Could not open staging.txt\n");
+        return 1;
+    }
+
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        char *filename = strtok(line, ",");
+        // In order to get next token and to continue with the same string NULL is passed as
+        // first argument since strtok maintains a static pointer to your previous passed string:
+        char *stored_hash = strtok(NULL, ", ");
+        // Remove the newline character from the end of the string
+        stored_hash[strcspn(stored_hash, "\n")] = 0;
+
+        if (file_exists(filename)) {
+            unsigned char hash[SHA_DIGEST_LENGTH];
+            compute_hash(filename, hash);
+
+            char computed_hash[SHA_DIGEST_LENGTH*2+1];
+            for (int i = 0; i < SHA_DIGEST_LENGTH; i++) {
+                sprintf(computed_hash + i*2, "%02x", hash[i]);
+            }
+
+            printf("stored hash: %s, computed hash: %s\n", stored_hash, computed_hash);
+
+            if (strcmp(stored_hash, computed_hash) != 0) {
+                printf("File %s has been changed. Use command './chas add' to track these changes.\n", filename);
+            }
+        }
     }
 
     fclose(file);
 
     return 0;
+    
+
+
+
+
+
+
+    // Check if changed files are staged or not
+
+
+    
+
 }
