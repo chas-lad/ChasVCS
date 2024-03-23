@@ -48,7 +48,7 @@ int checkout(char* branchName, char* commitHash){
 
     char unzipCommand[150]; 
 
-    // temp here just for testing purposes remove this later and change to .
+    // ./temp/ here just for testing purposes remove this later and change to .
     sprintf(unzipCommand, "unzip %s -d ./temp/", zipFilePath);
 
     system(unzipCommand);
@@ -67,14 +67,6 @@ int checkout(char* branchName, char* commitHash){
     fprintf(file, "\ncurrentHeadLocation:%s", commitHash);
 
     fclose(file);
-
-    // update the staging.txt file with the files from the commit
-    file = fopen(".chas/staging.txt", "w");
-
-    if (file == NULL) {
-        printf("Error opening file!\n");
-        return 1;
-    }
 
     // copy the staging.txt file from the commit directory to the staging.txt file in the .chas folder
     char stagingFilePath[100];

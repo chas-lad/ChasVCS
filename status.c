@@ -4,6 +4,8 @@
 #include <sys/stat.h>
 #include <openssl/sha.h>
 #include <time.h>
+#include <dirent.h>
+#include <unistd.h>
 
 
 // Function to check if a file exists
@@ -113,17 +115,54 @@ int status(){
 
     fclose(file);
 
+    // check if there are any untracked files in the current working directory
+    // - get all the files in the current directory
+    // - check if they are in the staging.txt file
+    // - if they are not then they are untracked files
+    
+    // get the current working directory
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+        printf("Error getting current working directory\n");
+        return 1;
+    }
+
+    // open the current working directory
+    DIR *dir;
+    struct dirent *ent;
+    if ((dir = opendir(cwd)) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            // check if the file is a regular file
+            if (ent->d_type == DT_REG) {
+                // check if the file is in the staging.txt file
+                file = fopen(".chas/staging.txt", "r");
+                if (!file) {
+                    printf("Could not open staging.txt\n");
+                    return 1;
+                }
+
+                int found = 0;
+                while (fgets(line, sizeof(line), file)) {
+                    char *filename = strtok(line, ",");
+                    if (strcmp(filename, ent->d_name) == 0) {
+                        found = 1;
+                        break;
+                    }
+                }
+
+                fclose(file);
+
+                if (!found) {
+                    printf("File %s is untracked. Use command './chas add' to track this file.\n", ent->d_name);
+                }
+            }
+        }
+        closedir(dir);
+    } else {
+        printf("Error opening current working directory\n");
+        return 1;
+    }
+
     return 0;
-    
-
-
-
-
-
-
-    // Check if changed files are staged or not
-
-
-    
 
 }

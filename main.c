@@ -161,6 +161,13 @@ int main(int argc, char* argv[]){
         return getLog();
     }
 
+    if(strcmp(argv[1], "revert") == 0){
+        printf("revert\n");
+    }
+
+    if(strcmp(argv[1], "reset") == 0){
+        printf("reset\n");
+    }
 
 
     return 0;

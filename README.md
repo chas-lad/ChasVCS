@@ -18,11 +18,22 @@
 - Push to remote repo 
 - Pull from remote repo
 
-## How will it work?
+## How does it work?
 - The code is written in C, and when compiled produces a `chas` executable
 - This executable will need to be put in the directory we are using the chas commands in.
 - Example usage: `./chas init`,`./chas add file.txt`
 
+## Usage
+
+- `./chas init`:  initialise a .chas repo in your current working directory
+- `./chas branch <branch name>`: create a branch with specified name
+- `./chas checkout <branch name> <commit hash>`: checkout a specific commit on a specific branch (both must be specified). Note any uncommited changes to your current working directory will be lost!
+- `.chas status`: prints out information of modified or untracked files in the current working directory by comparing to the commit HEAD is pointing to.
+
 
 ## TODO
 - Need ability to track/commit directories. Should be trivial, just need to store the path.
+- Change functionality of initialising .chas repo, so that it is created in the calling directory
+(not in directory that chas executable is located)
+- Package C files into a seperate build folder (will help with testing when trying to checkout and 
+checking untracked files etc.)
