@@ -49,6 +49,7 @@
 - `chas log`: prints out the entire commit history for the current branch HEAD is on. 
 
 ## TODO
-- Get pull and pushing to remote repo working.
+- Implement tagging and then ability to search commits by tags.
+- Get pull and pushing to remote repo working. (test this by also making a config file to add user info. Then make repos in different directories and try pushing and pulling to and from the same remote repo.)
 - Get merging and displaying merge conflicts working.
 - Add executable to bin path and test the program, **need to remove references to temp folder which I have been using to checkout commits for testing**.
