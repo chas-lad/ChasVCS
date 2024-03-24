@@ -108,7 +108,7 @@ int status(){
             printf("stored hash: %s, computed hash: %s\n", stored_hash, computed_hash);
 
             if (strcmp(stored_hash, computed_hash) != 0) {
-                printf("File %s has been changed. Use command './chas add' to track these changes.\n", filename);
+                printf("File %s has been changed. Use command 'chas add' to track these changes.\n", filename);
             }
         }
     }
@@ -153,7 +153,7 @@ int status(){
                 fclose(file);
 
                 if (!found) {
-                    printf("File %s is untracked. Use command './chas add' to track this file.\n", ent->d_name);
+                    printf("File %s is untracked. Use command chas add' to track this file.\n", ent->d_name);
                 }
             }
         }

@@ -11,6 +11,7 @@
 #include "branch.h"
 #include "log.h"
 #include "status.h"
+#include "remove.h"
 
 #define BUFFER_SIZE 4096
 
@@ -145,16 +146,20 @@ int main(int argc, char* argv[]){
         
     }
 
-    if(strcmp(argv[1], "merge") == 0){
-        printf("merge\n");
-    }
-
     if(strcmp(argv[1], "diff") == 0){
         printf("diff\n");
     }
 
     if(strcmp(argv[1], "status") == 0){
         return status();
+    }
+
+    if(strcmp(argv[1], "remove") == 0){
+        if(argc == 2){
+            printf("No files to remove\n");
+            return 1;
+        }
+        return removeFiles(argc - 2, &argv[2]);
     }
 
     if(strcmp(argv[1], "log") == 0){

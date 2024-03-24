@@ -1,0 +1,1 @@
+int removeFiles(int fileCount, char* files[]);

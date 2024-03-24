@@ -56,7 +56,7 @@ int commit(char* currentBranch, char* message[]) {
 
     if (stat(commitFolderName, &st) == 0) {
         // Directory already exists
-        printf("Nothing to commit. Add files using 'git add'\n");
+        printf("Nothing to commit. Add files using 'chas add'\n");
         return 1;
     }
 
