@@ -30,9 +30,9 @@
 
     - Then, move your chas executable to this directory using `mv chas ~/bin/`
 
-    - Update your PATH: If `~/bin` is not already in your PATH, you need to add it. You can do this by modifying your shell's configuration file (`~/.bashrc`, `~/.bash_profile`, `~/.zshrc`, etc., depending on your shell). For example, if you're using bash, you can edit `~/.bashrc` using `echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc`
+    - Update your PATH: If `~/bin` is not already in your PATH, you need to add it. You can do this by modifying your shell's configuration file (`~/.bashrc`, `~/.bash_profile`, `~/.zshrc`, etc., depending on your shell). For example, if you're using Mac like me, you can edit `~/.zshrc` using `echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc`
     
-    - After adding this line, either restart your terminal or run `source ~/.bashrc`. This will update your PATH to include ~/bin.
+    - After adding this line, either restart your terminal or run `source ~/.zshrc`. This will update your PATH to include ~/bin.
 
     - Make chas executable (if it's not already). If you haven't made chas executable, you can do so with the chmod command `chmod +x ~/bin/chas`.
     
@@ -52,4 +52,4 @@
 - Implement tagging and then ability to search commits by tags.
 - Get pull and pushing to remote repo working. (test this by also making a config file to add user info. Then make repos in different directories and try pushing and pulling to and from the same remote repo.) UPDATE: There doesn't seem a better way to do this than to set up a git server and end up using git clone, push and pull. One complex option would be to set up my own Linux server and create my own remote code hosting solution. 
 - Get merging and displaying merge conflicts working.
-- Add executable to bin path and test the program, **need to remove references to temp folder which I have been using to checkout commits for testing**.
+- **need to remove references to temp folder which I have been using to checkout commits for testing**.
