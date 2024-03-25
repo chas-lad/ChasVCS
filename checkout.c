@@ -49,7 +49,7 @@ int checkout(char* branchName, char* commitHash){
     char unzipCommand[150]; 
 
     // ./temp/ here just for testing purposes remove this later and change to .
-    sprintf(unzipCommand, "unzip %s -d ./temp/", zipFilePath);
+    sprintf(unzipCommand, "unzip %s -d .", zipFilePath);
 
     system(unzipCommand);
 
