@@ -73,7 +73,8 @@ int init(){
 
 
 int main(int argc, char* argv[]){
-
+    // Would use CASE statments to more clearly handle all these if statements to handle the different cases
+    // but 'switch' statements in C don't support string comparisons. We can only do character comparisons.
     if(argc == 1){
         printf("No arguments\n");
         return 1;
