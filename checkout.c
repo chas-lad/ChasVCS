@@ -12,9 +12,10 @@ int checkout(char* branchName, char* commitHash){
 
     char deleteCommand[100];
     // This won't delete the .chas folder, * by default doesn't delete hidden files
-    //sprintf(deleteCommand, "rm -rf *");
+    sprintf(deleteCommand, "rm -rf *");
 
-    sprintf(deleteCommand, "rm -rf ./temp/*");
+    // Uncomment line below and comment line above when testing 
+    // sprintf(deleteCommand, "rm -rf ./temp/*");
 
     system(deleteCommand);
    
@@ -48,7 +49,9 @@ int checkout(char* branchName, char* commitHash){
 
     char unzipCommand[150]; 
 
-    // ./temp/ here just for testing purposes remove this later and change to .
+    // sprintf(unzipCommand, "unzip %s -d ./temp/", zipFilePath);
+
+    // ./temp/ above is for testing purposes, uncomment this later and comment line below when testing
     sprintf(unzipCommand, "unzip %s -d .", zipFilePath);
 
     system(unzipCommand);
