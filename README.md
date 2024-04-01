@@ -12,8 +12,6 @@
 - Branch: Create and manage branches.
 - Status: Get the information, concerning modified or untracked files in the current working directory by comparing to the commit that HEAD it is pointing to. 
 - Log: Get the history of all commits in the branch.
-- Merge: Merge changes from one branch into another.
-- Diff: Show differences between versions of files.
 
 ## Features I will build once I have completed the above (remote repo - probably use)
 - Push to remote repo 
